@@ -4,6 +4,7 @@ public class Video {
     public String title;
     public String videoId;
     public String thumbnailUrl;
+    public String duration;
 
     public Video(String title, String videoId, String thumbnailUrl) {
         this.title = title;

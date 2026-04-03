@@ -2,7 +2,7 @@ package com.example.builtdaily.models;
 
 import java.util.List;
 
-public class YouTubeResponse {
+public class VideoSearchResponse {
     public List<Item> items;
 
     public static class Item {

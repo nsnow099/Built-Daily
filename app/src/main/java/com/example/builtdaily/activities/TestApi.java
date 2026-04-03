@@ -16,7 +16,7 @@ public class TestApi {
     public void runTest() {
         YouTubeRepository repo = new YouTubeRepository();
 
-        repo.searchVideos("10 minute back workout", "medium", new Callback<List<Video>>() {
+        repo.searchArmWorkouts( "long", true, false, new Callback<List<Video>>() {
             @Override
             public void onResponse(Call<List<Video>> call, Response<List<Video>> response) {
 
