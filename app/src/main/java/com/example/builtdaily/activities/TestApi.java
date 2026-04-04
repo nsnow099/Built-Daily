@@ -16,7 +16,7 @@ public class TestApi {
     public void runTest() {
         YouTubeRepository repo = new YouTubeRepository();
 
-        repo.searchArmWorkouts( "long", true, false, new Callback<List<Video>>() {
+        repo.searchHIITWorkouts("medium", false, false, new Callback<List<Video>>() {
             @Override
             public void onResponse(Call<List<Video>> call, Response<List<Video>> response) {
 
@@ -27,6 +27,7 @@ public class TestApi {
                         Log.d("API_TEST", "Title: " + video.title);
                         Log.d("API_TEST", "ID: " + video.videoId);
                         Log.d("API_TEST", "Thumbnail: " + video.thumbnailUrl);
+                        Log.d("API_TEST", "Length: " + video.duration);
                     }
                 } else {
                     Log.d("API_TEST", "No videos returned");
