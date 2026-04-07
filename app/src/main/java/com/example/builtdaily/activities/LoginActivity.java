@@ -33,8 +33,14 @@ public class LoginActivity extends AppCompatActivity {
         AuthManager authManager = new AuthManager(this);
 
         loginBtn.setOnClickListener(v -> {
-            String email = emailInput.getText().toString();
-            String password = passwordInput.getText().toString();
+            String email = emailInput.getText().toString().trim().toLowerCase();
+            String password = passwordInput.getText().toString().trim();
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Enter both email and password", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             boolean success = authManager.login(email, password);
 
             if (success) {
@@ -43,6 +49,7 @@ public class LoginActivity extends AppCompatActivity {
                         .putString("logged_in_user", email)
                         .apply();
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                finish();
             } else {
                 Toast.makeText(this, "Invalid login", Toast.LENGTH_SHORT).show();
             }

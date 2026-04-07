@@ -6,7 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 public class AuthManager {
-    private DatabaseHelper dbHelper;
+    private final DatabaseHelper dbHelper;
 
     public AuthManager(Context context) {
         dbHelper = new DatabaseHelper(context);
@@ -14,6 +14,13 @@ public class AuthManager {
 
     // SIGNUP
     public boolean signup(String email, String password) {
+        email = normalizeEmail(email);
+        password = normalizePassword(password);
+
+        if (email.isEmpty() || password.isEmpty()) {
+            return false;
+        }
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         Cursor cursor = db.query(
@@ -38,6 +45,13 @@ public class AuthManager {
     }
 
     public boolean login(String email, String password) {
+        email = normalizeEmail(email);
+        password = normalizePassword(password);
+
+        if (email.isEmpty() || password.isEmpty()) {
+            return false;
+        }
+
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(
                 DatabaseHelper.TABLE_USERS,
@@ -50,5 +64,13 @@ public class AuthManager {
         boolean success = cursor.moveToFirst();
         cursor.close();
         return success;
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase();
+    }
+
+    private String normalizePassword(String password) {
+        return password == null ? "" : password.trim();
     }
 }
