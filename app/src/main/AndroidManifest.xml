@@ -12,6 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BuiltDaily">
         <activity android:name=".activities.MainActivity" />
+        <activity android:name=".activities.VideoPlayerActivity" />
+        <activity android:name=".activities.ProfileActivity" />
+        <activity android:name=".activities.WorkoutScheduleActivity" />
+        <activity android:name=".activities.VideoPreferencesActivity" />
         <activity android:name=".activities.SignupActivity" />
         <activity android:name=".activities.LoginActivity"
             android:exported="true">

@@ -1,3 +1,83 @@
 <resources>
     <string name="app_name">Built Daily</string>
+    <string name="home_title">Home</string>
+    <string name="home_subtitle">Your weekly training dashboard</string>
+    <string name="streak_label">Current streak</string>
+    <string name="default_streak_value">0</string>
+    <string name="streak_supporting_default">Keep showing up. It compounds.</string>
+    <string name="streak_supporting_singular">day in a row</string>
+    <string name="streak_supporting_plural">days in a row</string>
+    <string name="complete_workout_button">Complete today\'s workout</string>
+    <string name="schedule_section_title">Workout schedule</string>
+    <string name="no_schedule_message">No workout schedule yet.</string>
+    <string name="create_schedule_button">Create workout schedule</string>
+    <string name="edit_schedule_button">Edit workout schedule</string>
+    <string name="edit_preferences_button">Edit video preferences</string>
+    <string name="profile_button">Open profile</string>
+    <string name="recommended_videos_title">Recommended videos</string>
+    <string name="day_recommendation_header">%1$s: %2$s</string>
+    <string name="recommended_for_day_format">%1$s workout: %2$s</string>
+    <string name="video_section_placeholder">Videos will appear after you create a schedule.</string>
+    <string name="create_schedule_prompt">Create a schedule to unlock personalized workout videos.</string>
+    <string name="schedule_summary_format">Plan:\n%1$s\nVideo length: %2$s</string>
+    <string name="loading_videos">Loading videos...</string>
+    <string name="no_videos_found">No matching videos found yet.</string>
+    <string name="video_load_failed">Could not load videos. Check your API key and network access.</string>
+    <string name="video_title_format">%1$d. %2$s</string>
+    <string name="video_duration_format">Duration: %1$s</string>
+    <string name="video_link_format">Watch: %1$s</string>
+    <string name="duration_unknown">Unknown</string>
+    <string name="close_video_button">Close video</string>
+    <string name="workout_completed">Workout completed. Streak updated.</string>
+    <string name="workout_already_completed">Today\'s workout is already counted.</string>
+    <string name="profile_title">Profile</string>
+    <string name="profile_subtitle">Account and training settings</string>
+    <string name="profile_email_label">Signed in as</string>
+    <string name="back_home_button">Back to home</string>
+    <string name="logout_button">Log out</string>
+    <string name="schedule_editor_title">Workout schedule</string>
+    <string name="schedule_editor_subtitle">Build a weekly training plan that feels realistic.</string>
+    <string name="schedule_builder_hint">Choose every day you want to train and assign a workout type to each selected day.</string>
+    <string name="save_schedule_button">Save schedule</string>
+    <string name="schedule_day_required">Choose at least one workout day.</string>
+    <string name="schedule_saved_message">Workout schedule saved.</string>
+    <string name="preferences_title">Video preferences</string>
+    <string name="preferences_subtitle">Tune the style of videos recommended for every workout day.</string>
+    <string name="beginner_checkbox_label">Beginner-friendly videos only</string>
+    <string name="no_equipment_checkbox_label">No-equipment videos only</string>
+    <string name="save_preferences_button">Save preferences</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="login_title">Built Daily</string>
+    <string name="login_subtitle">Small sessions. Real consistency.</string>
+    <string name="signup_title">Create Account</string>
+    <string name="signup_subtitle">Start building a schedule that fits your week.</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Log in</string>
+    <string name="signup_button">Create account</string>
+    <string name="day_mon">Monday</string>
+    <string name="day_tue">Tuesday</string>
+    <string name="day_wed">Wednesday</string>
+    <string name="day_thu">Thursday</string>
+    <string name="day_fri">Friday</string>
+    <string name="day_sat">Saturday</string>
+    <string name="day_sun">Sunday</string>
+
+    <string-array name="workout_focus_options">
+        <item>Full Body</item>
+        <item>Arms</item>
+        <item>Legs</item>
+        <item>Core</item>
+        <item>Yoga</item>
+        <item>Cardio</item>
+        <item>Chest</item>
+        <item>Back</item>
+        <item>Cycling</item>
+    </string-array>
+
+    <string-array name="workout_duration_options">
+        <item>short</item>
+        <item>medium</item>
+        <item>long</item>
+    </string-array>
 </resources>

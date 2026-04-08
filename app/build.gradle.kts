@@ -12,13 +12,11 @@ if (localPropertiesFile.exists()) {
     localProperties.load(FileInputStream(localPropertiesFile))
 }
 
-val youtubeApiKey = localProperties.getProperty("YOUTUBE_API_KEY") ?: ""
+val youtubeApiKey = project.findProperty("YOUTUBE_API_KEY") as? String ?: localProperties.getProperty("YOUTUBE_API_KEY") ?: ""
 
 android {
     namespace = "com.example.builtdaily"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
@@ -54,10 +52,12 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
+    implementation("androidx.browser:browser:1.8.0")
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")

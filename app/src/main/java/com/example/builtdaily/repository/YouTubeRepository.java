@@ -18,19 +18,23 @@ import retrofit2.Response;
 
 public class YouTubeRepository {
     private final YouTubeApiService apiService;
+    // some static strings for the youtube api
     private static final String part = "snippet";
     private static final int maxResults = 50;
     private static final String relevanceLanguage = "en";
     private static final String type = "video";
     private static final boolean videoEmbeddable = true;
     private static final boolean videoSyndicated = true;
+    // stuff to exclude from search so we don't get weird anatomy videos
     private String exclude = " -science -anatomy -explained -research -study -podcast";
 
     public YouTubeRepository() {
+        // init retrofit service
         apiService = RetrofitClient.getInstance().create(YouTubeApiService.class);
     }
 
     private void searchVideos(String query, String videoDuration, int minSeconds, int maxSeconds, boolean beginnerFriendly, boolean noEquipment, String workout, Callback<List<Video>> callback) {
+        // make the search call to youtube
         Call<VideoSearchResponse> call = apiService.searchVideos(part, query+exclude, maxResults, relevanceLanguage, "", type, videoDuration, videoEmbeddable, videoSyndicated, Constants.API_KEY);
         call.enqueue(new retrofit2.Callback<VideoSearchResponse>() {
             @Override
@@ -40,6 +44,7 @@ public class YouTubeRepository {
                 List<String> ids = new ArrayList<>();
 
                 if (response.body() != null) {
+                    // loop through the results and save basic info
                     for (VideoSearchResponse.Item item : response.body().items) {
                         String title = item.snippet.title;
                         String videoId = item.id.videoId;
@@ -48,6 +53,7 @@ public class YouTubeRepository {
                         ids.add(videoId);
                     }
                 }
+                // now we need to get durations which is a second call
                 filterVideos(videos, ids, minSeconds, maxSeconds, beginnerFriendly, noEquipment, workout, callback);
             }
 
@@ -60,28 +66,34 @@ public class YouTubeRepository {
     }
 
     private void filterVideos(List<Video> videos, List<String> ids, int minSeconds, int maxSeconds, boolean beginnerFriendly, boolean noEquipment, String workout, Callback<List<Video>> callback) {
+        // join IDs with commas for the api
         String idString = String.join(",", ids);
 
+        // second call to get contentDetails (duration)
         Call<VideoDetailsResponse> call = apiService.getVideoDetails(
                 "contentDetails",
                 idString,
                 Constants.API_KEY
         );
 
-        call.enqueue(new Callback<VideoDetailsResponse>() { //another call to get the videos durations
+        call.enqueue(new Callback<VideoDetailsResponse>() { 
             @Override
             public void onResponse(Call<VideoDetailsResponse> call, Response<VideoDetailsResponse> response) {
 
                 if (response.body() != null) {
+                    // add the duration to our video objects
                     for (int i = 0; i < response.body().items.size(); i++) {
                         videos.get(i).duration = response.body().items.get(i).contentDetails.duration;
                     }
                 }
 
+                // filter the list based on what the user wants
                 List<Video> filtered = filterLength(videos, minSeconds, maxSeconds);
                 if (workout.equals("core")) filtered = filterTitle(filtered, workout);
                 if (beginnerFriendly) filtered = filterTitle(filtered, "beginner");
                 if (noEquipment) filtered = filterTitle(filtered, "no equipment");
+                
+                // send the final list back to the activity
                 callback.onResponse(null, Response.success(filtered));
             }
 
@@ -98,6 +110,7 @@ public class YouTubeRepository {
         for (Video v : videos) {
             int seconds = parseDurationToSeconds(v.duration);
 
+            // only add if it fits the time range
             if (seconds >= minSeconds && seconds <= maxSeconds) {
                 filtered.add(v);
             }
@@ -114,6 +127,7 @@ public class YouTubeRepository {
         }
 
         for (Video v : videos) {
+            // check if the title contains the keyword (case insensitive)
             if (v.title != null && v.title.toLowerCase().contains(include.toLowerCase())) {
                 filtered.add(v);
             }
@@ -123,6 +137,7 @@ public class YouTubeRepository {
     }
 
     private int parseDurationToSeconds(String duration) {
+        // handles the weird ISO 8601 duration format
         int hours = 0, minutes = 0, seconds = 0;
 
         duration = duration.replace("PT", "");
@@ -147,6 +162,7 @@ public class YouTubeRepository {
     }
 
     private String buildQuery(String workoutType, boolean beginnerFriendly, boolean noEquipment) {
+        // build the string we send to youtube search
         StringBuilder query = new StringBuilder();
 
         if (beginnerFriendly) query.append("beginner");
@@ -157,6 +173,8 @@ public class YouTubeRepository {
         return query.toString();
     }
 
+    // specific search methods for each workout type
+
     public void searchArmWorkouts( String videoDuration, boolean noEquipment, boolean beginnerFriendly, Callback<List<Video>> callback) {
         Log.d("API_TEST", "searchArmWorkouts called");
         int minSeconds = 300;
@@ -164,7 +182,7 @@ public class YouTubeRepository {
         switch (videoDuration) {
             case "short":
                 maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
+                videoDuration = "medium";
                 break;
             case "medium":
                 minSeconds = 601;
@@ -188,7 +206,7 @@ public class YouTubeRepository {
         switch (videoDuration) {
             case "short":
                 maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
+                videoDuration = "medium";
                 break;
             case "medium":
                 minSeconds = 601;
@@ -212,7 +230,7 @@ public class YouTubeRepository {
         switch (videoDuration) {
             case "short":
                 maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
+                videoDuration = "medium";
                 break;
             case "medium":
                 minSeconds = 601;
@@ -236,7 +254,7 @@ public class YouTubeRepository {
         switch (videoDuration) {
             case "short":
                 maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
+                videoDuration = "medium";
                 break;
             case "medium":
                 minSeconds = 601;
@@ -260,7 +278,7 @@ public class YouTubeRepository {
         switch (videoDuration) {
             case "short":
                 maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
+                videoDuration = "medium";
                 break;
             case "medium":
                 minSeconds = 601;
@@ -284,7 +302,7 @@ public class YouTubeRepository {
         switch (videoDuration) {
             case "short":
                 maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
+                videoDuration = "medium";
                 break;
             case "medium":
                 minSeconds = 601;
@@ -308,7 +326,7 @@ public class YouTubeRepository {
         switch (videoDuration) {
             case "short":
                 maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
+                videoDuration = "medium";
                 break;
             case "medium":
                 minSeconds = 601;
@@ -325,6 +343,30 @@ public class YouTubeRepository {
         searchVideos(query, videoDuration, minSeconds, maxSeconds, beginnerFriendly, noEquipment, "chest", callback);
     }
 
+    public void searchBackWorkouts( String videoDuration, boolean noEquipment, boolean beginnerFriendly, Callback<List<Video>> callback) {
+        Log.d("API_TEST", "searchBackWorkouts called");
+        int minSeconds = 300;
+        int maxSeconds = 2400;
+        switch (videoDuration) {
+            case "short":
+                maxSeconds = 600;
+                videoDuration = "medium";
+                break;
+            case "medium":
+                minSeconds = 601;
+                maxSeconds = 1500;
+                break;
+            case "long":
+                minSeconds = 1501;
+                break;
+            default:
+                videoDuration = "any";
+        }
+
+        String query = buildQuery("back workout", beginnerFriendly, noEquipment);
+        searchVideos(query, videoDuration, minSeconds, maxSeconds, beginnerFriendly, noEquipment, "back", callback);
+    }
+
     public void searchCyclingWorkouts( String videoDuration, boolean noEquipment, boolean beginnerFriendly, Callback<List<Video>> callback) {
         Log.d("API_TEST", "searchCyclingWorkouts called");
         int minSeconds = 300;
@@ -332,7 +374,7 @@ public class YouTubeRepository {
         switch (videoDuration) {
             case "short":
                 maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
+                videoDuration = "medium";
                 break;
             case "medium":
                 minSeconds = 601;
@@ -347,29 +389,5 @@ public class YouTubeRepository {
 
         String query = buildQuery("cycling workout", beginnerFriendly, noEquipment);
         searchVideos(query, videoDuration, minSeconds, maxSeconds, beginnerFriendly, noEquipment, "cycling", callback);
-    }
-
-    public void searchHIITWorkouts( String videoDuration, boolean noEquipment, boolean beginnerFriendly, Callback<List<Video>> callback) {
-        Log.d("API_TEST", "searchHIITWorkouts called");
-        int minSeconds = 300;
-        int maxSeconds = 2400;
-        switch (videoDuration) {
-            case "short":
-                maxSeconds = 600;
-                videoDuration = "medium"; //5-10 mins still falls within medium duration for the api param
-                break;
-            case "medium":
-                minSeconds = 601;
-                maxSeconds = 1500;
-                break;
-            case "long":
-                minSeconds = 1501;
-                break;
-            default:
-                videoDuration = "any";
-        }
-
-        String query = buildQuery("hiit workout", beginnerFriendly, noEquipment);
-        searchVideos(query, videoDuration, minSeconds, maxSeconds, beginnerFriendly, noEquipment, "hiit", callback);
     }
 }
