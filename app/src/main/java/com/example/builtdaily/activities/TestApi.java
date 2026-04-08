@@ -14,15 +14,18 @@ import retrofit2.Response;
 public class TestApi {
 
     public void runTest() {
+        // init the repo so we can call the search methods
         YouTubeRepository repo = new YouTubeRepository();
 
-        repo.searchHIITWorkouts("medium", false, false, new Callback<List<Video>>() {
+        // testing the new back workout search I just added
+        repo.searchBackWorkouts("medium", false, false, new Callback<List<Video>>() {
             @Override
             public void onResponse(Call<List<Video>> call, Response<List<Video>> response) {
-
+                // get the list of videos from the response body
                 List<Video> videos = response.body();
 
                 if (videos != null) {
+                    // loop through all videos and print details to logcat to make sure it works
                     for (Video video : videos) {
                         Log.d("API_TEST", "Title: " + video.title);
                         Log.d("API_TEST", "ID: " + video.videoId);
@@ -36,6 +39,7 @@ public class TestApi {
 
             @Override
             public void onFailure(Call<List<Video>> call, Throwable t) {
+                // if the api call fails print the error message here
                 Log.e("API_TEST", "Error: " + t.getMessage());
             }
         });

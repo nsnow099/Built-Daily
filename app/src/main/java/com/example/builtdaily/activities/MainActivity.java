@@ -33,6 +33,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
+    // text views and buttons for the UI
     private TextView streakValue;
     private TextView streakSupportingText;
     private TextView scheduleSummary;
@@ -50,8 +51,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // helper class to handle shared prefs
         preferencesManager = new UserPreferencesManager(this);
 
+        // linking all the xml IDs to variables
         streakValue = findViewById(R.id.streakValue);
         streakSupportingText = findViewById(R.id.streakSupportingText);
         scheduleSummary = findViewById(R.id.scheduleSummary);
@@ -66,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         Button editScheduleBtn = findViewById(R.id.homeEditScheduleBtn);
         Button editPreferencesBtn = findViewById(R.id.homeEditPreferencesBtn);
 
+        // setting up clicks for the different buttons
         profileBtn.setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, ProfileActivity.class)));
         editScheduleBtn.setOnClickListener(v ->
@@ -80,16 +84,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // refresh the screen data when coming back to the app
         renderHomeScreen();
     }
 
     private void renderHomeScreen() {
+        // showing the current streak
         int streak = preferencesManager.getStreak();
         streakValue.setText(String.valueOf(streak));
         streakSupportingText.setText(streak == 1
                 ? getString(R.string.streak_supporting_singular)
                 : getString(R.string.streak_supporting_plural));
 
+        // if there's no schedule yet, show the prompt to create one
         if (!preferencesManager.hasWorkoutSchedule()) {
             scheduleSummary.setText(getString(R.string.no_schedule_message));
             createScheduleBtn.setVisibility(View.VISIBLE);
@@ -102,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // if schedule exists, update the summary text
         String scheduleText = getString(
                 R.string.schedule_summary_format,
                 preferencesManager.getScheduleSummary(),
@@ -111,20 +119,25 @@ public class MainActivity extends AppCompatActivity {
         createScheduleBtn.setVisibility(View.GONE);
         completeWorkoutBtn.setVisibility(View.VISIBLE);
         videoSectionTitle.setText(R.string.recommended_videos_title);
+        // show the day buttons at the top
         renderDayPicker();
     }
 
     private void markWorkoutCompleted() {
+        // get today's date in string format
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
         int previousStreak = preferencesManager.getStreak();
+        // save the completion in preferences
         preferencesManager.saveWorkoutCompletion(today);
 
+        // simple check if streak actually went up
         if (preferencesManager.getStreak() == previousStreak) {
             Toast.makeText(this, R.string.workout_already_completed, Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, R.string.workout_completed, Toast.LENGTH_SHORT).show();
         }
 
+        // update the streak text on the screen
         int streak = preferencesManager.getStreak();
         streakValue.setText(String.valueOf(streak));
         streakSupportingText.setText(streak == 1
@@ -142,27 +155,32 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // clear old buttons before drawing new ones
         dayPickerContainer.removeAllViews();
         dayPickerContainer.setVisibility(View.VISIBLE);
         selectedDaySummary.setVisibility(View.VISIBLE);
 
+        // default to first day if nothing selected
         if (selectedDay == null || !scheduleMap.containsKey(selectedDay)) {
             selectedDay = scheduleMap.keySet().iterator().next();
         }
 
+        // loop through the schedule and make buttons for each day
         for (Map.Entry<String, String> entry : scheduleMap.entrySet()) {
             Button dayButton = createDayButton(getDisplayDayName(entry.getKey()), entry.getKey().equals(selectedDay));
             dayButton.setOnClickListener(v -> {
                 selectedDay = entry.getKey();
-                renderDayPicker();
+                renderDayPicker(); // redraw so the highlight moves
             });
             dayPickerContainer.addView(dayButton);
         }
 
+        // call api to get videos for the selected day's workout
         showSelectedDayRecommendations(scheduleMap.get(selectedDay));
     }
 
     private Button createDayButton(String day, boolean isSelected) {
+        // building the button programmatically instead of XML
         Button button = new Button(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -175,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
         button.setPadding(dp(18), dp(10), dp(18), dp(10));
         button.setText(day);
         button.setAllCaps(false);
+        // change color depending on if it is selected
         if (isSelected) {
             button.setBackgroundTintList(getColorStateList(R.color.teal_primary));
             button.setTextColor(getColor(R.color.white));
@@ -189,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
         videosContainer.removeAllViews();
         selectedDaySummary.setText(getString(R.string.recommended_for_day_format, getDisplayDayName(selectedDay), focus));
 
+        // card for the video list section
         LinearLayout sectionCard = new LinearLayout(this);
         LinearLayout.LayoutParams sectionParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -201,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
         videosContainer.addView(sectionCard);
 
         addEmptyState(sectionCard, getString(R.string.loading_videos));
+        // kick off the api call
         fetchVideosForFocus(focus, sectionCard);
     }
 
@@ -217,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
+                // only show the first 6 videos so it is not too long
                 int limit = Math.min(videos.size(), 6);
                 for (int i = 0; i < limit; i++) {
                     targetContainer.addView(createVideoCard(videos.get(i), i + 1));
@@ -231,10 +253,12 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        // get the user prefs for the search
         String duration = preferencesManager.getPreferredDuration();
         boolean noEquipment = preferencesManager.isNoEquipmentEnabled();
         boolean beginner = preferencesManager.isBeginnerFriendlyEnabled();
 
+        // giant switch to call the right method for each workout type
         switch (focus.toLowerCase(Locale.US)) {
             case "arms":
                 repo.searchArmWorkouts(duration, noEquipment, beginner, callback);
@@ -254,11 +278,11 @@ public class MainActivity extends AppCompatActivity {
             case "chest":
                 repo.searchChestWorkouts(duration, noEquipment, beginner, callback);
                 break;
+            case "back":
+                repo.searchBackWorkouts(duration, noEquipment, beginner, callback);
+                break;
             case "cycling":
                 repo.searchCyclingWorkouts(duration, noEquipment, beginner, callback);
-                break;
-            case "hiit":
-                repo.searchHIITWorkouts(duration, noEquipment, beginner, callback);
                 break;
             case "full body":
             default:
@@ -268,6 +292,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private View createVideoCard(Video video, int position) {
+        // building the individual video cards programmatically
         MaterialCardView cardView = new MaterialCardView(this);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -285,6 +310,7 @@ public class MainActivity extends AppCompatActivity {
         contentLayout.setOrientation(LinearLayout.VERTICAL);
         contentLayout.setPadding(dp(16), dp(16), dp(16), dp(16));
 
+        // loading thumbnail image with Glide
         ImageView thumbnailView = new ImageView(this);
         LinearLayout.LayoutParams thumbnailParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -300,6 +326,7 @@ public class MainActivity extends AppCompatActivity {
                 .error(R.drawable.thumbnail_placeholder)
                 .into(thumbnailView);
 
+        // title text
         TextView titleView = new TextView(this);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -312,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         titleView.setTypeface(Typeface.DEFAULT_BOLD);
 
+        // duration text
         TextView durationView = new TextView(this);
         LinearLayout.LayoutParams durationParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -323,6 +351,7 @@ public class MainActivity extends AppCompatActivity {
         durationView.setTextColor(getColor(R.color.teal_text_soft));
         durationView.setText(getString(R.string.video_duration_format, duration));
 
+        // link text
         TextView linkView = new TextView(this);
         LinearLayout.LayoutParams linkParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -334,11 +363,14 @@ public class MainActivity extends AppCompatActivity {
         linkView.setTextColor(getColor(R.color.link_blue));
         linkView.setTypeface(Typeface.DEFAULT_BOLD);
 
+        // add everything to the layout
         contentLayout.addView(thumbnailView);
         contentLayout.addView(titleView);
         contentLayout.addView(durationView);
         contentLayout.addView(linkView);
         cardView.addView(contentLayout);
+        
+        // click listeners to open the video
         cardView.setClickable(true);
         cardView.setFocusable(true);
         cardView.setOnClickListener(v -> openVideo(video.videoId));
@@ -360,6 +392,7 @@ public class MainActivity extends AppCompatActivity {
         container.addView(emptyState);
     }
 
+    // util method to convert dp to pixels because Android likes pixels in code
     private int dp(int value) {
         return Math.round(TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
@@ -369,6 +402,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openVideo(String videoId) {
+        // start the video player activity with the youtube URL
         String videoUrl = buildVideoUrl(videoId);
         Intent intent = new Intent(this, VideoPlayerActivity.class);
         intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUrl);
@@ -380,6 +414,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getDisplayDayName(String dayKey) {
+        // maps the keys back to full names
         switch (dayKey) {
             case "Mon":
                 return getString(R.string.day_mon);
@@ -400,6 +435,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String formatDuration(String rawDuration) {
+        // parses the weird PT ISO 8601 duration string from youtube API
         if (rawDuration == null || rawDuration.isEmpty()) {
             return getString(R.string.duration_unknown);
         }
@@ -425,6 +461,7 @@ public class MainActivity extends AppCompatActivity {
             seconds = Integer.parseInt(duration.replace("S", ""));
         }
 
+        // if there are hours show H:MM:SS otherwise just M:SS
         if (hours > 0) {
             return String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds);
         }

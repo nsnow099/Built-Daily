@@ -71,8 +71,8 @@
         <item>Yoga</item>
         <item>Cardio</item>
         <item>Chest</item>
+        <item>Back</item>
         <item>Cycling</item>
-        <item>HIIT</item>
     </string-array>
 
     <string-array name="workout_duration_options">

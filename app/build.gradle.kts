@@ -12,13 +12,11 @@ if (localPropertiesFile.exists()) {
     localProperties.load(FileInputStream(localPropertiesFile))
 }
 
-val youtubeApiKey = localProperties.getProperty("YOUTUBE_API_KEY") ?: ""
+val youtubeApiKey = project.findProperty("YOUTUBE_API_KEY") as? String ?: localProperties.getProperty("YOUTUBE_API_KEY") ?: ""
 
 android {
     namespace = "com.example.builtdaily"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
