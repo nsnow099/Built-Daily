@@ -76,8 +76,8 @@
     </string-array>
 
     <string-array name="workout_duration_options">
-        <item>short</item>
-        <item>medium</item>
-        <item>long</item>
+        <item>Short</item>
+        <item>Medium</item>
+        <item>Long</item>
     </string-array>
 </resources>
