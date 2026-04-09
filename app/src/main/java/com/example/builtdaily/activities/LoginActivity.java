@@ -19,11 +19,12 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // auth manager handles the database check
+        AuthManager authManager = new AuthManager(this);
+
         // check if user is already logged in using shared preferences
-        String user = getSharedPreferences("auth_prefs", MODE_PRIVATE)
-                .getString("logged_in_user", null);
-        if (user != null) {
-            // if they are, just go straight to the main screen
+        int loggedInUserId = getSharedPreferences("auth_prefs", MODE_PRIVATE).getInt("logged_in_user_id", -1);
+        if (loggedInUserId != -1) {
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }
@@ -33,9 +34,6 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.password);
         loginBtn = findViewById(R.id.loginBtn);
         goToSignup = findViewById(R.id.goToSignup);
-
-        // auth manager handles the database check
-        AuthManager authManager = new AuthManager(this);
 
         loginBtn.setOnClickListener(v -> {
             // get the text from inputs
@@ -50,18 +48,15 @@ public class LoginActivity extends AppCompatActivity {
 
             // try to log in
             boolean success = authManager.login(email, password);
-
             if (success) {
-                // save the login state in shared prefs so they stay logged in
+                int userId = authManager.getUserIdFromEmail(email);
                 getSharedPreferences("auth_prefs", MODE_PRIVATE)
                         .edit()
-                        .putString("logged_in_user", email)
+                        .putInt("logged_in_user_id", userId)
                         .apply();
-                // go to home screen
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                startActivity(new Intent(this, MainActivity.class));
                 finish();
             } else {
-                // show error if it failed
                 Toast.makeText(this, "Invalid login", Toast.LENGTH_SHORT).show();
             }
         });
