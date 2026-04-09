@@ -4,9 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.builtdaily.R;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -43,7 +41,7 @@ public class ProfileActivity extends AppCompatActivity {
             // clear the login info so it shows login screen next time
             getSharedPreferences("auth_prefs", MODE_PRIVATE)
                     .edit()
-                    .remove("logged_in_user")
+                    .remove("logged_in_user_id")
                     .apply();
             // go back to login screen
             Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);

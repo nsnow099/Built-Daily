@@ -6,9 +6,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.builtdaily.R;
 import com.example.builtdaily.utils.UserPreferencesManager;
 
@@ -26,7 +24,8 @@ public class VideoPreferencesActivity extends AppCompatActivity {
         Button cancelButton = findViewById(R.id.cancelPreferencesBtn);
 
         // manager class for the shared preferences
-        UserPreferencesManager preferencesManager = new UserPreferencesManager(this);
+        int userId = getSharedPreferences("auth_prefs", MODE_PRIVATE).getInt("logged_in_user_id", -1);
+        UserPreferencesManager preferencesManager = new UserPreferencesManager(this, userId);
 
         // setting up the spinner with the duration options
         ArrayAdapter<CharSequence> durationAdapter = ArrayAdapter.createFromResource(

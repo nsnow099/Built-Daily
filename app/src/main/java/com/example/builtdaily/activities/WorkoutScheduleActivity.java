@@ -6,12 +6,9 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.builtdaily.R;
 import com.example.builtdaily.utils.UserPreferencesManager;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -28,7 +25,7 @@ public class WorkoutScheduleActivity extends AppCompatActivity {
         Spinner durationSpinner = findViewById(R.id.scheduleDurationSpinner);
         Button saveButton = findViewById(R.id.saveScheduleBtn);
         Button cancelButton = findViewById(R.id.cancelScheduleBtn);
-        
+
         // arrays for checkboxes and spinners to make it easier to loop
         CheckBox[] dayChecks = new CheckBox[]{
                 findViewById(R.id.checkboxMon),
@@ -49,7 +46,8 @@ public class WorkoutScheduleActivity extends AppCompatActivity {
                 findViewById(R.id.spinnerSun)
         };
 
-        UserPreferencesManager preferencesManager = new UserPreferencesManager(this);
+        int userId = getSharedPreferences("auth_prefs", MODE_PRIVATE).getInt("logged_in_user_id", -1);
+        UserPreferencesManager preferencesManager = new UserPreferencesManager(this, userId);
 
         // fill the spinners with workout options from strings.xml
         ArrayAdapter<CharSequence> focusAdapter = buildAdapter(R.array.workout_focus_options);
@@ -66,7 +64,7 @@ public class WorkoutScheduleActivity extends AppCompatActivity {
         for (int i = 0; i < DAY_KEYS.length; i++) {
             String savedWorkout = savedSchedule.get(DAY_KEYS[i]);
             boolean isSelected = savedWorkout != null && !savedWorkout.isEmpty();
-            
+
             // check the box and enable spinner if it was saved before
             dayChecks[i].setChecked(isSelected);
             daySpinners[i].setEnabled(isSelected);
@@ -100,7 +98,10 @@ public class WorkoutScheduleActivity extends AppCompatActivity {
             }
 
             // save to shared prefs and close
-            preferencesManager.saveWorkoutSchedule(scheduleMap, duration);
+            preferencesManager.saveWorkoutSchedule(scheduleMap);
+            preferencesManager.saveVideoPreferences(duration,
+                    preferencesManager.isBeginnerFriendlyEnabled(),
+                    preferencesManager.isNoEquipmentEnabled());
             Toast.makeText(this, R.string.schedule_saved_message, Toast.LENGTH_SHORT).show();
             finish();
         });

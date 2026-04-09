@@ -12,23 +12,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.builtdaily.R;
 import com.example.builtdaily.models.Video;
 import com.example.builtdaily.repository.YouTubeRepository;
 import com.example.builtdaily.utils.UserPreferencesManager;
 import com.bumptech.glide.Glide;
 import com.google.android.material.card.MaterialCardView;
-
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -53,7 +49,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // helper class to handle shared prefs
-        preferencesManager = new UserPreferencesManager(this);
+        int userId = getSharedPreferences("auth_prefs", MODE_PRIVATE).getInt("logged_in_user_id", -1);
+        Log.d("USER_DEBUG", "Current userId = " + userId);
+        preferencesManager = new UserPreferencesManager(this, userId);
 
         // linking all the xml IDs to variables
         streakValue = findViewById(R.id.streakValue);
@@ -371,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
         contentLayout.addView(durationView);
         contentLayout.addView(linkView);
         cardView.addView(contentLayout);
-        
+
         // click listeners to open the video
         cardView.setClickable(true);
         cardView.setFocusable(true);

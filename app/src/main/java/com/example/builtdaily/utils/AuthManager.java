@@ -83,4 +83,22 @@ public class AuthManager {
     private String normalizePassword(String password) {
         return password == null ? "" : password.trim();
     }
+
+    // used on login
+    public int getUserIdFromEmail(String email) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(
+                DatabaseHelper.TABLE_USERS,
+                new String[]{DatabaseHelper.COL_ID},
+                DatabaseHelper.COL_EMAIL + "=?",
+                new String[]{email},
+                null, null, null
+        );
+        int userId = -1;
+        if (cursor.moveToFirst()) {
+            userId = cursor.getInt(0);
+        }
+        cursor.close();
+        return userId;
+    }
 }
