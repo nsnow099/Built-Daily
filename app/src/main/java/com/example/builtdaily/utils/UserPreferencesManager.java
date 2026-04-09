@@ -1,8 +1,10 @@
 package com.example.builtdaily.utils;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
-
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -10,71 +12,78 @@ import java.util.Map;
 import java.util.Set;
 
 public class UserPreferencesManager {
-    private static final String PREFS_NAME = "user_state_prefs";
-    private static final String KEY_STREAK = "streak";
-    private static final String KEY_LAST_COMPLETED_DATE = "last_completed_date";
-    private static final String KEY_SCHEDULE_PLAN = "schedule_plan";
-    private static final String KEY_SCHEDULE_DURATION = "schedule_duration";
-    private static final String KEY_PREFERENCE_DURATION = "preference_duration";
-    private static final String KEY_PREFERENCE_BEGINNER = "preference_beginner";
-    private static final String KEY_PREFERENCE_NO_EQUIPMENT = "preference_no_equipment";
-    private static final String ENTRY_SEPARATOR = "|";
-    private static final String VALUE_SEPARATOR = "=";
+    private final SQLiteDatabase db;
+    private final int userId;
 
-    private final SharedPreferences preferences;
-
-    public UserPreferencesManager(Context context) {
-        preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    public UserPreferencesManager(Context context, int userId) {
+        DatabaseHelper helper = new DatabaseHelper(context);
+        db = helper.getWritableDatabase();
+        this.userId = userId;
     }
 
     public int getStreak() {
-        return preferences.getInt(KEY_STREAK, 0);
+        Cursor c = db.rawQuery(
+                "SELECT streak FROM user_state WHERE user_id=?",
+                new String[]{String.valueOf(userId)}
+        );
+        int streak = 0;
+        if (c.moveToFirst()) {
+            streak = c.getInt(0);
+        }
+        c.close();
+        return streak;
     }
 
     public String getLastCompletedDate() {
-        return preferences.getString(KEY_LAST_COMPLETED_DATE, "");
+        Cursor c = db.rawQuery(
+                "SELECT last_completed_date FROM user_state WHERE user_id=?",
+                new String[]{String.valueOf(userId)}
+        );
+        String date = "";
+        if (c.moveToFirst()) {
+            date = c.getString(0);
+        }
+        c.close();
+        return date;
     }
 
     public void saveWorkoutCompletion(String currentDate) {
-        String lastCompletedDate = getLastCompletedDate();
+        String lastDate = getLastCompletedDate();
         int streak = getStreak();
-
-        if (!currentDate.equals(lastCompletedDate)) {
-            preferences.edit()
-                    .putInt(KEY_STREAK, streak + 1)
-                    .putString(KEY_LAST_COMPLETED_DATE, currentDate)
-                    .apply();
-        }
+        if (currentDate.equals(lastDate)) return;
+        ContentValues v = new ContentValues();
+        v.put("user_id", userId);
+        v.put("streak", streak + 1);
+        v.put("last_completed_date", currentDate);
+        db.insertWithOnConflict("user_state", null, v, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
     public boolean hasWorkoutSchedule() {
         return !getScheduleMap().isEmpty();
     }
 
-    public void saveWorkoutSchedule(Map<String, String> scheduleMap, String duration) {
-        preferences.edit()
-                .putString(KEY_SCHEDULE_PLAN, encodeSchedule(scheduleMap))
-                .putString(KEY_SCHEDULE_DURATION, duration)
-                .apply();
+    public void saveWorkoutSchedule(Map<String, String> scheduleMap) {
+        db.delete("schedule", "user_id=?", new String[]{String.valueOf(userId)});
+        for (Map.Entry<String, String> e : scheduleMap.entrySet()) {
+            ContentValues v = new ContentValues();
+            v.put("user_id", userId);
+            v.put("day_key", e.getKey());
+            v.put("focus", e.getValue());
+            db.insert("schedule", null, v);
+        }
     }
 
     public Map<String, String> getScheduleMap() {
-        String encoded = preferences.getString(KEY_SCHEDULE_PLAN, "");
-        LinkedHashMap<String, String> scheduleMap = new LinkedHashMap<>();
-
-        if (encoded == null || encoded.isEmpty()) {
-            return scheduleMap;
+        LinkedHashMap<String,String> map = new LinkedHashMap<>();
+        Cursor c = db.rawQuery(
+                "SELECT day_key, focus FROM schedule WHERE user_id=?",
+                new String[]{String.valueOf(userId)}
+        );
+        while (c.moveToNext()) {
+            map.put(c.getString(0), c.getString(1));
         }
-
-        String[] entries = encoded.split("\\|");
-        for (String entry : entries) {
-            String[] parts = entry.split("=", 2);
-            if (parts.length == 2 && !parts[0].isEmpty() && !parts[1].isEmpty()) {
-                scheduleMap.put(parts[0], parts[1]);
-            }
-        }
-
-        return scheduleMap;
+        c.close();
+        return map;
     }
 
     public String getScheduleDays() {
@@ -86,7 +95,14 @@ public class UserPreferencesManager {
     }
 
     public String getScheduleDuration() {
-        return preferences.getString(KEY_SCHEDULE_DURATION, "medium");
+        Cursor c = db.rawQuery(
+                "SELECT duration FROM video_preferences WHERE user_id=?",
+                new String[]{String.valueOf(userId)}
+        );
+        String duration = "medium";
+        if (c.moveToFirst()) duration = c.getString(0);
+        c.close();
+        return duration;
     }
 
     public String getScheduleSummary() {
@@ -94,7 +110,6 @@ public class UserPreferencesManager {
         if (scheduleMap.isEmpty()) {
             return "";
         }
-
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, String> entry : scheduleMap.entrySet()) {
             if (builder.length() > 0) {
@@ -110,44 +125,53 @@ public class UserPreferencesManager {
         if (scheduleMap.isEmpty()) {
             return "";
         }
-
         String todayKey = getTodayKey();
         if (scheduleMap.containsKey(todayKey)) {
             return scheduleMap.get(todayKey);
         }
-
         return scheduleMap.values().iterator().next();
     }
 
     public void saveVideoPreferences(String duration, boolean beginnerFriendly, boolean noEquipment) {
-        preferences.edit()
-                .putString(KEY_PREFERENCE_DURATION, duration)
-                .putBoolean(KEY_PREFERENCE_BEGINNER, beginnerFriendly)
-                .putBoolean(KEY_PREFERENCE_NO_EQUIPMENT, noEquipment)
-                .apply();
+        ContentValues v = new ContentValues();
+        v.put("user_id", userId);
+        v.put("duration", duration);
+        v.put("beginner", beginnerFriendly ? 1 : 0);
+        v.put("no_equipment", noEquipment ? 1 : 0);
+        db.insertWithOnConflict("video_preferences", null, v, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
     public String getPreferredDuration() {
-        return preferences.getString(KEY_PREFERENCE_DURATION, "medium");
+        Cursor c = db.rawQuery(
+                "SELECT duration FROM video_preferences WHERE user_id=?",
+                new String[]{String.valueOf(userId)}
+        );
+        String duration = "medium";
+        if (c.moveToFirst()) duration = c.getString(0);
+        c.close();
+        return duration;
     }
 
     public boolean isBeginnerFriendlyEnabled() {
-        return preferences.getBoolean(KEY_PREFERENCE_BEGINNER, false);
+        Cursor c = db.rawQuery(
+                "SELECT beginner FROM video_preferences WHERE user_id=?",
+                new String[]{String.valueOf(userId)}
+        );
+        boolean result = false;
+        if (c.moveToFirst()) result = c.getInt(0) == 1;
+        c.close();
+        return result;
     }
 
     public boolean isNoEquipmentEnabled() {
-        return preferences.getBoolean(KEY_PREFERENCE_NO_EQUIPMENT, false);
-    }
-
-    private String encodeSchedule(Map<String, String> scheduleMap) {
-        StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, String> entry : scheduleMap.entrySet()) {
-            if (builder.length() > 0) {
-                builder.append(ENTRY_SEPARATOR);
-            }
-            builder.append(entry.getKey()).append(VALUE_SEPARATOR).append(entry.getValue());
-        }
-        return builder.toString();
+        Cursor c = db.rawQuery(
+                "SELECT no_equipment FROM video_preferences WHERE user_id=?",
+                new String[]{String.valueOf(userId)}
+        );
+        boolean result = false;
+        if (c.moveToFirst()) result = c.getInt(0) == 1;
+        c.close();
+        return result;
     }
 
     private String joinKeys(Map<String, String> scheduleMap) {
