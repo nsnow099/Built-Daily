@@ -23,6 +23,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.card.MaterialCardView;
 
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -238,8 +239,9 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                // only show the first 6 videos so it is not too long
-                int limit = Math.min(videos.size(), 6);
+                // choose 3 random videos
+                Collections.shuffle(videos);
+                int limit = Math.min(videos.size(), 3);
                 for (int i = 0; i < limit; i++) {
                     targetContainer.addView(createVideoCard(videos.get(i), i + 1));
                 }
