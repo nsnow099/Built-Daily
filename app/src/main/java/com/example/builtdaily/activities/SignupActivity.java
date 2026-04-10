@@ -42,9 +42,10 @@ public class SignupActivity extends AppCompatActivity {
 
             if (created) {
                 // if it worked, save login status and go to main activity
+                int userId = authManager.getUserIdFromEmail(email);
                 getSharedPreferences("auth_prefs", MODE_PRIVATE)
                         .edit()
-                        .putString("logged_in_user", email)
+                        .putInt("logged_in_user_id", userId)
                         .apply();
                 Toast.makeText(this, "Account created!", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(SignupActivity.this, MainActivity.class);
