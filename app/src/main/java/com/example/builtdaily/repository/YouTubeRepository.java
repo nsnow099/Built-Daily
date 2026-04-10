@@ -91,7 +91,7 @@ public class YouTubeRepository {
                 List<Video> filtered = filterLength(videos, minSeconds, maxSeconds);
                 if (workout.equals("core")) filtered = filterTitle(filtered, workout);
                 if (beginnerFriendly) filtered = filterTitle(filtered, "beginner");
-                if (noEquipment) filtered = filterTitle(filtered, "no equipment");
+                if (noEquipment && !workout.equals("cycling")) filtered = filterTitle(filtered, "no equipment");
                 
                 // send the final list back to the activity
                 callback.onResponse(null, Response.success(filtered));

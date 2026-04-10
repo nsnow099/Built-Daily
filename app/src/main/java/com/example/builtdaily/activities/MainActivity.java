@@ -7,7 +7,6 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -174,8 +173,8 @@ public class MainActivity extends AppCompatActivity {
             dayPickerContainer.addView(dayButton);
         }
 
-        // call api to get videos for the selected day's workout
-        showSelectedDayRecommendations(scheduleMap.get(selectedDay));
+        // display videos for the selected day
+        showSelectedDayRecommendations(selectedDay, scheduleMap.get(selectedDay));
     }
 
     private Button createDayButton(String day, boolean isSelected) {
@@ -203,9 +202,9 @@ public class MainActivity extends AppCompatActivity {
         return button;
     }
 
-    private void showSelectedDayRecommendations(String focus) {
+    private void showSelectedDayRecommendations(String dayKey, String focus) {
         videosContainer.removeAllViews();
-        selectedDaySummary.setText(getString(R.string.recommended_for_day_format, getDisplayDayName(selectedDay), focus));
+        selectedDaySummary.setText(getString(R.string.recommended_for_day_format, getDisplayDayName(dayKey), focus));
 
         // card for the video list section
         LinearLayout sectionCard = new LinearLayout(this);
@@ -219,46 +218,58 @@ public class MainActivity extends AppCompatActivity {
         sectionCard.setBackgroundResource(R.drawable.bg_surface_card);
         videosContainer.addView(sectionCard);
 
-        addEmptyState(sectionCard, getString(R.string.loading_videos));
-        // kick off the api call
-        fetchVideosForFocus(focus, sectionCard);
+        if (preferencesManager.needsRefresh()) {
+            addEmptyState(sectionCard, getString(R.string.loading_videos));
+            preferencesManager.clearCachedVideos();
+            fetchAllVideosForWeek();
+        } else {
+            List<Video> cachedVideos = preferencesManager.getVideosForDay(dayKey);
+            if (cachedVideos.isEmpty()) {
+                addEmptyState(sectionCard, getString(R.string.no_videos_found));
+            } else {
+                for (int i = 0; i < cachedVideos.size(); i++) {
+                    sectionCard.addView(createVideoCard(cachedVideos.get(i), i + 1));
+                }
+            }
+        }
     }
 
-    private void fetchVideosForFocus(String focus, LinearLayout targetContainer) {
+    private void fetchAllVideosForWeek() {
+        Map<String, String> scheduleMap = preferencesManager.getScheduleMap();
+        for (Map.Entry<String, String> entry : scheduleMap.entrySet()) {
+            fetchVideosForDay(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private void fetchVideosForDay(String dayKey, String focus) {
         YouTubeRepository repo = new YouTubeRepository();
         Callback<List<Video>> callback = new Callback<List<Video>>() {
             @Override
             public void onResponse(Call<List<Video>> call, Response<List<Video>> response) {
                 List<Video> videos = response.body();
-                targetContainer.removeAllViews();
-
-                if (videos == null || videos.isEmpty()) {
-                    addEmptyState(targetContainer, getString(R.string.no_videos_found));
-                    return;
-                }
-
-                // choose 3 random videos
-                Collections.shuffle(videos);
-                int limit = Math.min(videos.size(), 3);
-                for (int i = 0; i < limit; i++) {
-                    targetContainer.addView(createVideoCard(videos.get(i), i + 1));
+                if (videos != null && !videos.isEmpty()) {
+                    Collections.shuffle(videos);
+                    int limit = Math.min(videos.size(), 3);
+                    List<Video> selected = videos.subList(0, limit);
+                    preferencesManager.saveSelectedVideos(selected, dayKey);
+                    
+                    // if the day we just fetched is the currently selected day, refresh the UI
+                    if (dayKey.equals(selectedDay)) {
+                        renderDayPicker();
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<List<Video>> call, Throwable t) {
-                targetContainer.removeAllViews();
-                addEmptyState(targetContainer, getString(R.string.video_load_failed));
-                Log.e("API_TEST", "Error: " + t.getMessage());
+                Log.e("API_TEST", "Error fetching videos for " + dayKey + ": " + t.getMessage());
             }
         };
 
-        // get the user prefs for the search
         String duration = preferencesManager.getPreferredDuration();
         boolean noEquipment = preferencesManager.isNoEquipmentEnabled();
         boolean beginner = preferencesManager.isBeginnerFriendlyEnabled();
 
-        // giant switch to call the right method for each workout type
         switch (focus.toLowerCase(Locale.US)) {
             case "arms":
                 repo.searchArmWorkouts(duration, noEquipment, beginner, callback);

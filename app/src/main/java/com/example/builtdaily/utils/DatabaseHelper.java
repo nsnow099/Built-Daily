@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "builtdaily.db";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 4; // Incremented version
 
     // USERS
     public static final String TABLE_USERS = "users";
@@ -30,6 +30,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_DURATION = "duration";
     public static final String COL_BEGINNER = "beginner";
     public static final String COL_NO_EQUIPMENT = "no_equipment";
+
+    //SELECTED VIDEOS
+    public static final String TABLE_SELECTED_VIDEOS = "selected_videos";
+    public static final String COL_VIDEO_ID = "video_id";
+    public static final String COL_TITLE = "title";
+    public static final String COL_VIDEO_LENGTH = "video_length";
+    public static final String COL_WORKOUT_FOCUS = "workout_focus";
+    public static final String COL_THUMBNAIL = "thumbnail_url";
+    public static final String COL_START_OF_WEEK = "start_of_week";
+    public static final String COL_DAY_OF_WEEK = "day_of_week";
+
 
     public DatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -69,10 +80,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         COL_BEGINNER + " INTEGER, " +
                         COL_NO_EQUIPMENT + " INTEGER)"
         );
+
+        //SELECTED VIDEOS
+        db.execSQL(
+                "CREATE TABLE " + TABLE_SELECTED_VIDEOS + " (" +
+                        COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        COL_USER_ID + " INTEGER, " +
+                        COL_VIDEO_ID + " TEXT, " +
+                        COL_TITLE + " TEXT, " +
+                        COL_VIDEO_LENGTH + " TEXT, " +
+                        COL_WORKOUT_FOCUS + " TEXT, " +
+                        COL_THUMBNAIL + " TEXT, " +
+                        COL_START_OF_WEEK + " INTEGER, " +
+                        COL_DAY_OF_WEEK + " TEXT)"
+        );
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_SELECTED_VIDEOS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_VIDEO_PREFS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_SCHEDULE);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_STATE);

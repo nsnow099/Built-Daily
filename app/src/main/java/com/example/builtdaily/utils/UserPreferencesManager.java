@@ -2,20 +2,24 @@ package com.example.builtdaily.utils;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import com.example.builtdaily.models.Video;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class UserPreferencesManager {
     private final SQLiteDatabase db;
     private final int userId;
+    private final Context context;
 
     public UserPreferencesManager(Context context, int userId) {
+        this.context = context;
         DatabaseHelper helper = new DatabaseHelper(context);
         db = helper.getWritableDatabase();
         this.userId = userId;
@@ -71,10 +75,11 @@ public class UserPreferencesManager {
             v.put("focus", e.getValue());
             db.insert("schedule", null, v);
         }
+        markNeedsRefresh();
     }
 
     public Map<String, String> getScheduleMap() {
-        LinkedHashMap<String,String> map = new LinkedHashMap<>();
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
         Cursor c = db.rawQuery(
                 "SELECT day_key, focus FROM schedule WHERE user_id=?",
                 new String[]{String.valueOf(userId)}
@@ -84,14 +89,6 @@ public class UserPreferencesManager {
         }
         c.close();
         return map;
-    }
-
-    public String getScheduleDays() {
-        return joinKeys(getScheduleMap());
-    }
-
-    public String getScheduleFocus() {
-        return joinUniqueValues(getScheduleMap());
     }
 
     public String getScheduleDuration() {
@@ -120,18 +117,6 @@ public class UserPreferencesManager {
         return builder.toString();
     }
 
-    public String getWorkoutFocusForTodayOrFirst() {
-        Map<String, String> scheduleMap = getScheduleMap();
-        if (scheduleMap.isEmpty()) {
-            return "";
-        }
-        String todayKey = getTodayKey();
-        if (scheduleMap.containsKey(todayKey)) {
-            return scheduleMap.get(todayKey);
-        }
-        return scheduleMap.values().iterator().next();
-    }
-
     public void saveVideoPreferences(String duration, boolean beginnerFriendly, boolean noEquipment) {
         ContentValues v = new ContentValues();
         v.put("user_id", userId);
@@ -139,6 +124,7 @@ public class UserPreferencesManager {
         v.put("beginner", beginnerFriendly ? 1 : 0);
         v.put("no_equipment", noEquipment ? 1 : 0);
         db.insertWithOnConflict("video_preferences", null, v, SQLiteDatabase.CONFLICT_REPLACE);
+        markNeedsRefresh();
     }
 
     public String getPreferredDuration() {
@@ -172,6 +158,86 @@ public class UserPreferencesManager {
         if (c.moveToFirst()) result = c.getInt(0) == 1;
         c.close();
         return result;
+    }
+
+    private void markNeedsRefresh() {
+        context.getSharedPreferences("builtdaily_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("needs_refresh_" + userId, true)
+                .apply();
+    }
+
+    public boolean needsRefresh() { //refresh if needs refresh has been set (settings changed) or it's a new week without fetch done
+        boolean forcedRefresh = context.getSharedPreferences("builtdaily_prefs", Context.MODE_PRIVATE)
+                .getBoolean("needs_refresh_" + userId, false);
+        
+        if (forcedRefresh) return true;
+
+        long lastStartOfWeek = getLastStartOfWeek();
+        long currentStartOfWeek = getCurrentStartOfWeek();
+        
+        return lastStartOfWeek != currentStartOfWeek;
+    }
+
+    private long getLastStartOfWeek() {
+        Cursor c = db.rawQuery(
+                "SELECT MAX(start_of_week) FROM selected_videos WHERE user_id=?",
+                new String[]{String.valueOf(userId)}
+        );
+        long start = 0;
+        if (c.moveToFirst()) {
+            start = c.getLong(0);
+        }
+        c.close();
+        return start;
+    }
+
+    private long getCurrentStartOfWeek() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
+    }
+
+    public void clearCachedVideos() {
+        db.delete("selected_videos", "user_id=?", new String[]{String.valueOf(userId)});
+        context.getSharedPreferences("builtdaily_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("needs_refresh_" + userId, false)
+                .apply();
+    }
+
+    public void saveSelectedVideos(List<Video> videos, String dayKey) {
+        long startOfWeek = getCurrentStartOfWeek();
+        for (Video v : videos) {
+            ContentValues values = new ContentValues();
+            values.put("user_id", userId);
+            values.put("video_id", v.videoId);
+            values.put("title", v.title);
+            values.put("video_length", v.duration);
+            values.put("thumbnail_url", v.thumbnailUrl);
+            values.put("day_of_week", dayKey);
+            values.put("start_of_week", startOfWeek);
+            db.insert("selected_videos", null, values);
+        }
+    }
+
+    public List<Video> getVideosForDay(String dayKey) {
+        List<Video> videos = new ArrayList<>();
+        Cursor c = db.rawQuery(
+                "SELECT video_id, title, thumbnail_url, video_length FROM selected_videos WHERE user_id=? AND day_of_week=?",
+                new String[]{String.valueOf(userId), dayKey}
+        );
+        while (c.moveToNext()) {
+            Video v = new Video(c.getString(1), c.getString(0), c.getString(2));
+            v.duration = c.getString(3);
+            videos.add(v);
+        }
+        c.close();
+        return videos;
     }
 
     private String joinKeys(Map<String, String> scheduleMap) {
