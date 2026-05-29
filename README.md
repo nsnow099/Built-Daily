@@ -63,7 +63,7 @@ cd Built-Daily
 ```
 
 2. Configure your YouTube API credentials
-   - Add your YouTube Data API key to the project configuration
+   - Add your YouTube Data API key to the project configuration in local.properties
    - Ensure proper API permissions are enabled
 
 3. Build and run the application
