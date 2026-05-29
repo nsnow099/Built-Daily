@@ -4,13 +4,13 @@ A streak-based workout planner mobile app that generates personalized daily work
 
 ## Overview
 
-Built Daily removes the friction from starting a workout routine. Instead of scrolling through endless YouTube videos, users define their fitness goals and preferences once, and the app generates a personalized daily workout plan with hand-picked YouTube videos that match their routine.
+Built Daily removes the friction from starting a workout routine. Through the app, users decide what they want to work on each day of the week and how, then each day the app finds a video to match, so users do not have to scroll through endless YouTube videos.
 
 The app tracks workout streaks to motivate consistency and help users build lasting fitness habits.
 
 ## Key Features
 
-- **Personalized Workout Generation** - Define your fitness goals and preferences, and get a custom daily workout plan
+- **Organization** - Help organize and come up with a workout plan
 - **YouTube Integration** - Seamlessly integrated video selection using the YouTube Data API to find relevant workout videos
 - **Streak Tracking** - Visual streak counter to motivate consistent workouts and habit building
 - **Decision Removal** - No more decision fatigue—the app picks the right videos for you based on your plan
@@ -20,8 +20,7 @@ The app tracks workout streaks to motivate consistency and help users build last
 
 ### Backend & API Integration
 - **YouTube Data API** - Implemented full integration with the YouTube Data API to intelligently search and filter workout videos based on user preferences and workout type
-- Handles video metadata retrieval, relevance ranking, and caching for optimal performance
-- Manages authentication and rate limiting
+- **Database** - Lightweight database to handle account information, streaks and preferences
 
 ### Frontend
 - Native mobile UI with features for:
@@ -39,9 +38,8 @@ The app tracks workout streaks to motivate consistency and help users build last
 - Implemented error handling and fallback mechanisms
 
 **Frontend Features:**
-- Developed key UI components for workout display and video integration
-- Built user preference management interface
-- Implemented streak tracking visualization
+- Implemented saving videos retrieved for the week, instead of re-fetching every load
+- Altered strategy for video selection to introduce more variety
 
 ## Tech Stack
 
@@ -95,6 +93,7 @@ This project reinforced the importance of:
 - Social features for sharing workouts and streaks
 - Workout performance metrics and progress tracking
 - Integration with fitness tracking APIs
+- Workout plan generation based on inputted goals
 
 ## License
 
